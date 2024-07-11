@@ -4,9 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChatGPT Interview Bot</title>
-    <!-- Materialize CSS -->
     <link
+      rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
     <style>
@@ -27,22 +30,18 @@
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
-      .response {
-        margin-top: 20px;
-        padding: 10px;
-        background-color: #e9ecef;
-        border-radius: 4px;
+      .recording {
+        color: red;
       }
-      audio {
+      #audioPlayer {
         margin-top: 20px;
-        width: 100%;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>ChatGPT Interview Bot</h1>
-      <div class="file-field input-field">
+      <div class="file-field input-field" style="display: none">
         <div class="btn">
           <span>File</span>
           <input type="file" id="fileInput" />
@@ -51,60 +50,105 @@
           <input class="file-path validate" type="text" />
         </div>
       </div>
-      <button id="uploadButton" class="btn waves-effect waves-light">
-        Upload
+
+      <button id="recordButton" class="btn-floating waves-effect waves-light">
+        <i class="material-icons"> mic </i>
       </button>
-      <div class="response" id="responseContainer"></div>
-      <audio id="audioPlayer" controls></audio>
+      <i>
+        (Tip: press the space bar on your keyboard, say something and then press
+        the space bar again)
+      </i>
+      <audio id="audioPlayer" controls style="display: none"></audio>
     </div>
     <!-- Materialize JavaScript -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-      document
-        .getElementById("uploadButton")
-        .addEventListener("click", async () => {
-          const fileInput = document.getElementById("fileInput");
-          if (fileInput.files.length === 0) {
-            M.toast({ html: "Please select a file." });
-            return;
-          }
+      let mediaRecorder;
+      let audioChunks;
+      const recordButton = document.getElementById("recordButton");
+      const fileInput = document.getElementById("fileInput");
 
-          const file = fileInput.files[0];
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const response = await fetch("http://127.0.0.1:8000/talk", {
-            method: "POST",
-            body: formData,
+      recordButton.addEventListener("click", async () => {
+        audioChunks = [];
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+          recordButton.innerHTML = '<i class="material-icons">mic</i>';
+          recordButton.classList.remove("recording", "red");
+        } else {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
           });
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.start();
+          recordButton.innerHTML =
+            '<i class="material-icons recording">fiber_manual_record</i>';
+          recordButton.classList.add("recording");
+          recordButton.classList.add("red");
 
-          if (!response.ok) {
-            M.toast({ html: "Failed to upload file." });
-            return;
-          }
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
 
-          const audioPlayer = document.getElementById("audioPlayer");
-          const mediaSource = new MediaSource();
-          audioPlayer.src = URL.createObjectURL(mediaSource);
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+            const audioUrl = URL.createObjectURL(audioBlob);
 
-          mediaSource.addEventListener("sourceopen", () => {
-            const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
-            const reader = response.body.getReader();
+            const file = new File([audioBlob], "recording.mp3", {
+              type: "audio/mp3",
+            });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
 
-            function read() {
-              reader.read().then(({ done, value }) => {
-                if (done) {
-                  mediaSource.endOfStream();
-                  return;
-                }
-                sourceBuffer.appendBuffer(value);
-                read();
-              });
+            // Automatically upload the file to the server
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await fetch("http://localhost:8000/talk", {
+              method: "POST",
+              body: formData,
+            });
+            console.log(response);
+
+            if (!response.ok) {
+              M.toast({ html: "Sorry, something went wrong." });
+              return;
             }
 
-            read();
-          });
-        });
+            const audioPlayer = document.getElementById("audioPlayer");
+            const mediaSource = new MediaSource();
+            audioPlayer.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener("sourceopen", () => {
+              const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
+              const reader = response.body.getReader();
+
+              function read() {
+                reader.read().then(({ done, value }) => {
+                  if (done) {
+                    sourceBuffer.addEventListener("updateend", () => {
+                      mediaSource.endOfStream();
+                      audioPlayer.play(); // Start playing the audio
+                    });
+                    return;
+                  }
+                  sourceBuffer.appendBuffer(value);
+                  read();
+                });
+              }
+
+              read();
+            });
+          };
+        }
+      });
+
+      document.body.onkeyup = (event) => {
+        if (event.key == " " || event.code == "Space" || event.keyCode == 32) {
+          recordButton.click();
+        }
+      };
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   </body>
 </html>

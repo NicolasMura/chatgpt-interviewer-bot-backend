@@ -1,9 +1,10 @@
 import json
 import os
+import shutil
 
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from openai import OpenAI
@@ -41,8 +42,16 @@ async def root():
 
 
 @app.post("/talk")
-async def post_audio(file: UploadFile):
+async def post_audio(file: UploadFile = File(...)):
+    path = f"{file.filename}"
+    with open(path, 'w+b') as f:
+        shutil.copyfileobj(file.file, f)
+
     user_message = transcribe_audio(file)
+
+    # Delete the file
+    os.remove(path)
+
     chat_response = get_chat_response(user_message)
     audio_output = text_to_speech(chat_response)
 
@@ -54,6 +63,7 @@ async def post_audio(file: UploadFile):
 
 def transcribe_audio(file: UploadFile) -> Transcription:
     filename = file.filename
+    print(file.filename)
 
     if filename is None:
         raise HTTPException(status_code=400, detail="No file uploaded")
