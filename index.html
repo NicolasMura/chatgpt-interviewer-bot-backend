@@ -12,6 +12,7 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <link href="./static/bot.css" rel="stylesheet" />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -25,6 +26,10 @@
         background-color: #f0f0f0;
       }
       .container {
+        text-align: center;
+        display: flex;
+        align-items: center;
+        grid-gap: 50px;
         background: white;
         padding: 20px;
         border-radius: 8px;
@@ -36,28 +41,57 @@
       #audioPlayer {
         margin-top: 20px;
       }
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>ChatGPT Interview Bot</h1>
-      <div class="file-field input-field" style="display: none">
-        <div class="btn">
-          <span>File</span>
-          <input type="file" id="fileInput" />
+      <div>
+        <h2>ChatGPT Interview Bot</h2>
+        <div class="file-field input-field" style="display: none">
+          <div class="btn">
+            <span>File</span>
+            <input type="file" id="fileInput" />
+          </div>
+          <div class="file-path-wrapper">
+            <input class="file-path validate" type="text" />
+          </div>
         </div>
-        <div class="file-path-wrapper">
-          <input class="file-path validate" type="text" />
+
+        <button
+          id="recordButton"
+          class="btn-floating btn-large waves-effect waves-light"
+        >
+          <i class="material-icons"> mic </i>
+        </button>
+        <p>
+          <i>
+            (Tip: press the space bar on your keyboard, say something and then
+            press the space bar again)
+          </i>
+        </p>
+      </div>
+      <div id="bot-container">
+        <div id="bot" class="neutral">
+          <div id="head">
+            <div id="left-ear">
+              <div id="left-ear-inner"></div>
+            </div>
+            <div id="face">
+              <div id="eyes">
+                <div id="left-eye"></div>
+                <div id="right-eye"></div>
+              </div>
+              <div id="mouth"></div>
+            </div>
+            <div id="right-ear">
+              <div id="right-ear-inner"></div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <button id="recordButton" class="btn-floating waves-effect waves-light">
-        <i class="material-icons"> mic </i>
-      </button>
-      <i>
-        (Tip: press the space bar on your keyboard, say something and then press
-        the space bar again)
-      </i>
       <audio id="audioPlayer" controls style="display: none"></audio>
     </div>
     <!-- Materialize JavaScript -->
@@ -67,6 +101,9 @@
       let audioChunks;
       const recordButton = document.getElementById("recordButton");
       const fileInput = document.getElementById("fileInput");
+      const audioPlayer = document.getElementById("audioPlayer");
+
+      const bot = document.getElementById("bot");
 
       recordButton.addEventListener("click", async () => {
         audioChunks = [];
@@ -74,6 +111,7 @@
           mediaRecorder.stop();
           recordButton.innerHTML = '<i class="material-icons">mic</i>';
           recordButton.classList.remove("recording", "red");
+          setStatus("computing");
         } else {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: true,
@@ -82,8 +120,8 @@
           mediaRecorder.start();
           recordButton.innerHTML =
             '<i class="material-icons recording">fiber_manual_record</i>';
-          recordButton.classList.add("recording");
-          recordButton.classList.add("red");
+          recordButton.classList.add("recording", "red");
+          setStatus("listening");
 
           mediaRecorder.ondataavailable = (event) => {
             audioChunks.push(event.data);
@@ -100,6 +138,9 @@
             dataTransfer.items.add(file);
             fileInput.files = dataTransfer.files;
 
+            // Disable the record button while waiting for the server response
+            recordButton.disabled = true;
+
             // Automatically upload the file to the server
             const formData = new FormData();
             formData.append("file", file);
@@ -112,10 +153,11 @@
 
             if (!response.ok) {
               M.toast({ html: "Sorry, something went wrong." });
+              recordButton.disabled = false; // Re-enable the record button
+              setStatus("");
               return;
             }
 
-            const audioPlayer = document.getElementById("audioPlayer");
             const mediaSource = new MediaSource();
             audioPlayer.src = URL.createObjectURL(mediaSource);
 
@@ -129,6 +171,7 @@
                     sourceBuffer.addEventListener("updateend", () => {
                       mediaSource.endOfStream();
                       audioPlayer.play(); // Start playing the audio
+                      setStatus("speaking");
                     });
                     return;
                   }
@@ -139,6 +182,11 @@
 
               read();
             });
+
+            audioPlayer.addEventListener("ended", () => {
+              recordButton.disabled = false; // Re-enable the record button
+              setStatus("");
+            });
           };
         }
       });
@@ -147,6 +195,11 @@
         if (event.key == " " || event.code == "Space" || event.keyCode == 32) {
           recordButton.click();
         }
+      };
+
+      const setStatus = (newstatus) => {
+        bot.classList.remove("speaking", "thinking", "listening", "computing");
+        bot.classList.add(newstatus);
       };
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>

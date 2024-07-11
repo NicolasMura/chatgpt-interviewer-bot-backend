@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from openai.types.audio import Transcription
 from openai.types.chat import ChatCompletion
@@ -18,6 +19,7 @@ client = OpenAI(organization=os.getenv("OPEN_AI_ORG"),
 elevenlabs_key = os.getenv("ELEVENLABS_KEY")
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 origins = [
     "http://localhost:5174",
