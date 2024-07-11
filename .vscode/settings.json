@@ -1,0 +1,10 @@
+{
+  "[python]": { "editor.defaultFormatter": "ms-python.autopep8" },
+  "cSpell.words": ["load_dotenv", "dotenv", "fastapi"],
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "python.analysis.typeCheckingMode": "basic"
+}
