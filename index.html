@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatGPT Interview Bot</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .container h1 {
+        margin-bottom: 20px;
+      }
+      .container input[type="file"] {
+        margin-bottom: 20px;
+      }
+      .container button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .container button:disabled {
+        background-color: #cccccc;
+      }
+      .response {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+      }
+      audio {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>ChatGPT Interview Bot</h1>
+      <input type="file" id="audioFile" accept="audio/*" />
+      <button id="uploadButton" disabled>Upload and Get Response</button>
+      <div class="response" id="response"></div>
+      <audio id="audioPlayer" controls></audio>
+    </div>
+
+    <script>
+      const audioFileInput = document.getElementById("audioFile");
+      const uploadButton = document.getElementById("uploadButton");
+      const responseDiv = document.getElementById("response");
+      const audioPlayer = document.getElementById("audioPlayer");
+
+      audioFileInput.addEventListener("change", () => {
+        uploadButton.disabled = !audioFileInput.files.length;
+      });
+
+      uploadButton.addEventListener("click", async () => {
+        const file = audioFileInput.files[0];
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("http://127.0.0.1:8000/talk", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          audioPlayer.src = url;
+          responseDiv.textContent = "Audio response received.";
+        } catch (error) {
+          responseDiv.textContent = "Error: " + error.message;
+        }
+      });
+    </script>
+  </body>
+</html>
