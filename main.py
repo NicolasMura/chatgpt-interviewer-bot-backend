@@ -14,11 +14,15 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Audio has been transcribed!"}
+    return {"message": "Hello World"}
 
 
 @app.post("/talk")
 async def post_audio(file: UploadFile):
+    user_messages = transcribe_audio(file)
+
+
+def transcribe_audio(file):
     filename = file.filename
 
     if filename is None:
@@ -30,3 +34,4 @@ async def post_audio(file: UploadFile):
         file=audio_file
     )
     print(transcription)
+    return {"message": "Audio has been transcribed!"}
