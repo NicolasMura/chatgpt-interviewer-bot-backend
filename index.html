@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChatGPT Interview Bot</title>
+    <!-- Materialize CSS -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+      rel="stylesheet"
+    />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -22,23 +27,6 @@
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
-      .container h1 {
-        margin-bottom: 20px;
-      }
-      .container input[type="file"] {
-        margin-bottom: 20px;
-      }
-      .container button {
-        padding: 10px 20px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
-      .container button:disabled {
-        background-color: #cccccc;
-      }
       .response {
         margin-top: 20px;
         padding: 10px;
@@ -47,51 +35,76 @@
       }
       audio {
         margin-top: 20px;
+        width: 100%;
       }
     </style>
   </head>
   <body>
     <div class="container">
       <h1>ChatGPT Interview Bot</h1>
-      <input type="file" id="audioFile" accept="audio/*" />
-      <button id="uploadButton" disabled>Upload and Get Response</button>
-      <div class="response" id="response"></div>
+      <div class="file-field input-field">
+        <div class="btn">
+          <span>File</span>
+          <input type="file" id="fileInput" />
+        </div>
+        <div class="file-path-wrapper">
+          <input class="file-path validate" type="text" />
+        </div>
+      </div>
+      <button id="uploadButton" class="btn waves-effect waves-light">
+        Upload
+      </button>
+      <div class="response" id="responseContainer"></div>
       <audio id="audioPlayer" controls></audio>
     </div>
-
+    <!-- Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-      const audioFileInput = document.getElementById("audioFile");
-      const uploadButton = document.getElementById("uploadButton");
-      const responseDiv = document.getElementById("response");
-      const audioPlayer = document.getElementById("audioPlayer");
+      document
+        .getElementById("uploadButton")
+        .addEventListener("click", async () => {
+          const fileInput = document.getElementById("fileInput");
+          if (fileInput.files.length === 0) {
+            M.toast({ html: "Please select a file." });
+            return;
+          }
 
-      audioFileInput.addEventListener("change", () => {
-        uploadButton.disabled = !audioFileInput.files.length;
-      });
+          const file = fileInput.files[0];
+          const formData = new FormData();
+          formData.append("file", file);
 
-      uploadButton.addEventListener("click", async () => {
-        const file = audioFileInput.files[0];
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
           const response = await fetch("http://127.0.0.1:8000/talk", {
             method: "POST",
             body: formData,
           });
 
           if (!response.ok) {
-            throw new Error("Network response was not ok");
+            M.toast({ html: "Failed to upload file." });
+            return;
           }
 
-          const blob = await response.blob();
-          const url = URL.createObjectURL(blob);
-          audioPlayer.src = url;
-          responseDiv.textContent = "Audio response received.";
-        } catch (error) {
-          responseDiv.textContent = "Error: " + error.message;
-        }
-      });
+          const audioPlayer = document.getElementById("audioPlayer");
+          const mediaSource = new MediaSource();
+          audioPlayer.src = URL.createObjectURL(mediaSource);
+
+          mediaSource.addEventListener("sourceopen", () => {
+            const sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
+            const reader = response.body.getReader();
+
+            function read() {
+              reader.read().then(({ done, value }) => {
+                if (done) {
+                  mediaSource.endOfStream();
+                  return;
+                }
+                sourceBuffer.appendBuffer(value);
+                read();
+              });
+            }
+
+            read();
+          });
+        });
     </script>
   </body>
 </html>
