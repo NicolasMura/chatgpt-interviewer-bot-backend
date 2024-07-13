@@ -6,7 +6,7 @@ import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from openai.types.audio import Transcription
@@ -40,7 +40,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Hello ChatGPT!"}
+    return FileResponse("static/index.html")
 
 
 @app.post("/talk")
@@ -55,12 +55,19 @@ async def post_audio(file: UploadFile = File(...)):
     os.remove(path)
 
     chat_response = get_chat_response(user_message)
+    print(chat_response)
     audio_output = text_to_speech(chat_response)
 
     def iterfile():
         yield audio_output
 
     return StreamingResponse(iterfile(), media_type="audio/mpeg")
+
+
+@app.get("/reset")
+async def reset():
+    delete_messages()
+    return {"message": "Chat history successfully reset."}
 
 
 def transcribe_audio(file: UploadFile) -> Transcription:
@@ -73,7 +80,9 @@ def transcribe_audio(file: UploadFile) -> Transcription:
     audio_file = open(filename, 'rb')
     transcription = client.audio.transcriptions.create(
         model="whisper-1",
-        file=audio_file
+        file=audio_file,
+        # language="en"
+        language="fr"
     )
 
     return transcription
@@ -98,9 +107,7 @@ def get_chat_response(user_message: Transcription) -> str:
     return parsed_gpt_response
 
 
-# def load_messages() -> list[dict[str, str]]:
 def load_messages():
-    # messages: list[dict[str, str]] = []
     messages = []
     file = 'database.json'
 
@@ -113,7 +120,14 @@ def load_messages():
                 messages.append(item)
     else:
         messages.append(
-            {"role": "system", "content": "You are interviewing the user for a front-end React developer position. Ask short questions that are relevant to a junior level developer. Your name is Sherlock. The user is Nikouz. Keep responses under 30 words and be funny sometimes."}
+            # {"role": "system", "content": "You're my best friend. Your name is Sherlock. The user is Nikouz. Answers must be no longer than 30 words and must be funny sometimes."}
+            # {"role": "system", "content": "Vous êtes mon meilleur ami. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
+            # {"role": "system", "content": "You are interviewing the user for a front-end React developer position. Ask short questions that are relevant to a junior level developer. Your name is Sherlock. The user is Nikouz. Keep responses under 30 words and be funny sometimes."}
+            # {"role": "system", "content": "Vous interviewez l'utilisateur pour un poste de développeur React front-end. Posez des questions courtes et pertinentes pour un développeur de niveau junior. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
+            # {"role": "system", "content": "Vous interviewez l'utilisateur pour un poste de développeur backend Python avancé. Posez des questions courtes et pertinentes pour un développeur de niveau junior. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
+            # {"role": "system", "content": "Vous discutez une enfant de 7 ans à propos de la récréation à l'édole primaire. Votre nom est Emma. L'utilisateur est Valentine. Les réponses ne doivent pas dépasser 30 mots et doivent être souvent accessibles et drôles pour un enfant de 7 ans."}
+            # {"role": "system", "content": "Vous discutez un homme de 40 ans à propos du travail. Votre nom est Sherlock. L'utilisateur est Camille. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
+            {"role": "system", "content": "Vous discutez un femme de 60 ans à propos de la sieste. Votre nom est Anne-Marie. L'utilisateur est Mamou. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
         )
     return messages
 
@@ -127,12 +141,23 @@ def save_messages(user_message: str, gpt_response: str):
         json.dump(messages, f)
 
 
+def delete_messages():
+    file = 'database.json'
+    with open(file, 'w') as f:
+        json.dump([], f)
+
+
 def text_to_speech(text: str) -> bytes | None:
-    voice_id = 'oDNl0oYmPNBE23Z3VlWf'
+    # voice_id = 'a5n9pJUnAhX4fn7lx3uo'  # FR - Martin Dupont Intime
+    # voice_id = 'McVZB9hVxVSk3Equu8EH'  # FR - Audrey
+    voice_id = 'FvmvwvObRqIHojkEGh5N'  # Adina - French teenager
+    # voice_id = '91SLZ6TbbUouhGf0mmaf' # EN - Heracles - deep, confident, and serious
+    # voice_id = 'oDNl0oYmPNBE23Z3VlWf' # EN - Carl - deep and calm narrator
 
     body = {
         "text": text,
-        "model_id": "eleven_monolingual_v1",
+        "model_id": "eleven_multilingual_v1",
+        # "model_id": "eleven_multilingual_v2",
         "voice_settings": {
             "stability": 0,
             "similarity_boost": 0,
@@ -151,6 +176,7 @@ def text_to_speech(text: str) -> bytes | None:
 
     try:
         response = requests.post(url, json=body, headers=headers)
+        print(response)
         if response.status_code == 200:
             return response.content
         else:

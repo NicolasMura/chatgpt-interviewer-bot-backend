@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="./static/favicon.ico" />
     <title>ChatGPT Interview Bot</title>
     <link
       rel="stylesheet"
@@ -28,6 +29,7 @@
       .container {
         text-align: center;
         display: flex;
+        flex-direction: row; /* Default flex direction */
         align-items: center;
         grid-gap: 50px;
         background: white;
@@ -43,6 +45,16 @@
       }
       .hidden {
         display: none;
+      }
+      #resetButton {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+      }
+      @media (max-width: 700px) {
+        .container {
+          flex-direction: column; /* Change flex direction on small screens */
+        }
       }
     </style>
   </head>
@@ -68,8 +80,8 @@
         </button>
         <p>
           <i>
-            (Tip: press the space bar on your keyboard, say something and then
-            press the space bar again)
+            (Tip: press the space bar on your keyboard, say "Hello Sherlock!"
+            and then press the space bar again)
           </i>
         </p>
       </div>
@@ -91,6 +103,14 @@
             </div>
           </div>
         </div>
+        <a
+          id="resetButton"
+          class="btn-floating waves-effect waves-light red tooltipped"
+          data-position="bottom"
+          data-tooltip="Delete chat history!"
+        >
+          <i class="material-icons"> delete </i>
+        </a>
       </div>
       <audio id="audioPlayer" controls style="display: none"></audio>
     </div>
@@ -104,6 +124,7 @@
       const audioPlayer = document.getElementById("audioPlayer");
 
       const bot = document.getElementById("bot");
+      const resetButton = document.getElementById("resetButton");
 
       recordButton.addEventListener("click", async () => {
         audioChunks = [];
@@ -149,7 +170,6 @@
               method: "POST",
               body: formData,
             });
-            console.log(response);
 
             if (!response.ok) {
               M.toast({ html: "Sorry, something went wrong." });
@@ -197,10 +217,33 @@
         }
       };
 
+      resetButton.addEventListener("click", async () => {
+        resetChatHistory();
+      });
+
       const setStatus = (newstatus) => {
         bot.classList.remove("speaking", "thinking", "listening", "computing");
-        bot.classList.add(newstatus);
+        if (newstatus) {
+          bot.classList.add(newstatus);
+        }
       };
+
+      const resetChatHistory = async () => {
+        const response = await fetch("http://localhost:8000/reset");
+
+        if (!response.ok) {
+          M.toast({ html: "Sorry, something went wrong." });
+          return;
+        }
+
+        const data = await response.json();
+        M.toast({ html: data.message });
+      };
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const elems = document.querySelectorAll(".tooltipped");
+        const instances = M.Tooltip.init(elems);
+      });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   </body>

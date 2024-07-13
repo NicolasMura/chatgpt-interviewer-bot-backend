@@ -1,6 +1,7 @@
 /* https://codepen.io/Lakadev/pen/xQPgbx */
 
 #bot-container {
+  position: relative;
   background-color: #000;
   padding: 30px 50px;
 }
