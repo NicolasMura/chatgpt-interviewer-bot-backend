@@ -26,7 +26,7 @@ origins = [
     # "http://localhost:5173",
     # "http://localhost:8000",
     # "http://localhost:8001",
-    # "https://chatgpt-interviewer-bot-backend.onrender.com",
+    "https://chatgpt-interviewer-bot-backend.onrender.com",
 ]
 
 app.add_middleware(
