@@ -166,7 +166,7 @@
             const formData = new FormData();
             formData.append("file", file);
 
-            const response = await fetch("http://localhost:8000/talk", {
+            const response = await fetch("/talk", {
               method: "POST",
               body: formData,
             });
@@ -229,7 +229,7 @@
       };
 
       const resetChatHistory = async () => {
-        const response = await fetch("http://localhost:8000/reset");
+        const response = await fetch("/reset");
 
         if (!response.ok) {
           M.toast({ html: "Sorry, something went wrong." });

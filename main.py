@@ -22,11 +22,11 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 origins = [
-    "http://localhost:5174",
-    "http://localhost:5173",
-    "http://localhost:8000",
-    "http://localhost:8001",
-    "http://localhost:3000",
+    # "http://localhost:5174",
+    # "http://localhost:5173",
+    # "http://localhost:8000",
+    # "http://localhost:8001",
+    # "https://chatgpt-interviewer-bot-backend.onrender.com",
 ]
 
 app.add_middleware(
