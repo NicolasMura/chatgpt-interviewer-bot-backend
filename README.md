@@ -1,15 +1,22 @@
-## Create a Talking ChatGPT Interview Bot Project
+# Create a Talking ChatGPT Interview Bot Project
 
-Full tutorial found on YouTube at https://youtu.be/4y1a4syMJHM
+I built a small bot as a POC, that uses GPT's OpenAI `whisper-1` speech-to-text transcription model & gpt-3.5-turbo chat completion model, as well as some Eleven Labs voices to get a fancy result.
+From the tutorial I found on YouTube at https://youtu.be/4y1a4syMJHM, big thanks to @TravisMedia.
+
+## Quick start
 
 ```shell
 conda create --name ChatGPT-Interview-Bot python fastapi uvicorn[standard] openai python-dotenv python-multipart requests
 conda activate ChatGPT-Interview-Bot
 
+cp env-sample env # fill environment variables with your own
+
 uvicorn main:app --reload
 ```
 
 Add `node_modules` to `.gitignore` file.
+
+## Frontend setup (as a cheatsheet)
 
 Add NPM, Nx and Angular app on this project:
 
@@ -20,7 +27,7 @@ npx nx add @nx/angular
 npx nx g @nx/angular:app chat-frontend --directory=apps --e2eTestRunner=none --unitTestRunner=none --routing=false --standalone=true --style=scss --addTailwind=true --skipTests=true --bundler=esbuild --ssr=false
 ```
 
-Don't forget to add these 2 scripts to the `package.json` file:
+Add these 2 scripts to the `package.json` file:
 
 ```json
 (...)
@@ -31,7 +38,9 @@ Don't forget to add these 2 scripts to the `package.json` file:
 (...)
 ```
 
-(sed command will work on Mac OS X only)
+> :warning: **_Important_**
+>
+> `sed -i '' (...)` command will work on Mac OS X only
 
 Adapt the target Angular build in `apps/chat-frontend/project.json`:
 
@@ -63,14 +72,28 @@ Adapt the target Angular build in `apps/chat-frontend/project.json`:
 }
 ```
 
-# Dev & contribute:
+## Dev & contribute (for the frontend app)
 
 ```shell
 yarn serve
 ```
 
-# Build:
+## Build (for the frontend app)
 
 ```shell
 yarn build
 ```
+
+## Deploy
+
+I've tested [Render](https://dashboard.render.com/web) to quickly deploy this app as a FastAPI app, and it does the job pretty well. See the `render.yaml` file to get some insight and the live app at https://chatgpt-interviewer-bot-backend.onrender.com.
+
+The only tricky point is that you have to remember adding a `PORT` environment variable (as well as `OPEN_AI_KEY`, `OPEN_AI_ORG` and `ELEVENLABS_KEY` ones) binded to 8000, and putting it in the start command in the Render's Web Service settings:
+
+```shell
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+## Credits
+
+[![AWS S3](https://yt3.googleusercontent.com/ytc/AIdro_l00TDaIm6OxCv6eJtOwdn2RHbFjeUJ8OJYVGmgdA4pEQ=s160-c-k-c0x00ffffff-no-rj)](https://www.youtube.com/@TravisMedia 'Travis Media')
