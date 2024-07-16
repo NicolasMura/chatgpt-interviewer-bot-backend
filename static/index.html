@@ -107,7 +107,7 @@
           id="resetButton"
           class="btn-floating waves-effect waves-light red tooltipped"
           data-position="bottom"
-          data-tooltip="Delete chat history!"
+          data-tooltip="Delete chat history"
         >
           <i class="material-icons"> delete </i>
         </a>
@@ -134,9 +134,23 @@
           recordButton.classList.remove("recording", "red");
           setStatus("computing");
         } else {
-          const stream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-          });
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+          } catch (error) {
+            console.error("Error accessing microphone:", error);
+            M.toast({ html: error });
+            alert(
+              "Could not access the microphone. Please check your microphone settings and permissions."
+            );
+          }
+
+          if (!stream) {
+            return;
+          }
+
           mediaRecorder = new MediaRecorder(stream);
           mediaRecorder.start();
           recordButton.innerHTML =
