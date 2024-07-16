@@ -14,7 +14,20 @@ Add `node_modules` to `.gitignore` file.
 Add NPM, Nx and Angular app on this project:
 
 ```shell
-npm init
+npm init # don't forget to add "serve": "nx serve chat-frontend" to scrip section in package.json
 npx nx@latest init
 npx nx add @nx/angular
+npx nx g @nx/angular:app chat-frontend --directory=apps --e2eTestRunner=none --unitTestRunner=none --routing=false --standalone=true --style=scss --addTailwind=true --skipTests=true --bundler=esbuild --ssr=false
+```
+
+Dev & contribute:
+
+```shell
+yarn serve
+```
+
+Build:
+
+```shell
+
 ```
