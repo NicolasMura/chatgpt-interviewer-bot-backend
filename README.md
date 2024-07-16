@@ -8,3 +8,13 @@ conda activate ChatGPT-Interview-Bot
 
 uvicorn main:app --reload
 ```
+
+Add `node_modules` to `.gitignore` file.
+
+Add NPM, Nx and Angular app on this project:
+
+```shell
+npm init
+npx nx@latest init
+npx nx add @nx/angular
+```
