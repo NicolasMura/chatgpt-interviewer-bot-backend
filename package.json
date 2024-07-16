@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "serve": "nx serve chat-frontend"
+    "serve": "nx serve chat-frontend",
+    "build": "nx build chat-frontend --deploy-url ./static/browser/ && sed -i '' 's/favicon.ico/.\\/static\\/browser\\/favicon.ico/g' static/browser/index.html"
   },
   "author": "",
   "license": "ISC",
