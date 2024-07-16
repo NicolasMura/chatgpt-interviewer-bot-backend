@@ -25,8 +25,8 @@
 #bot {
   position: relative;
   text-align: left;
-  width: 20em;
-  height: 20em;
+  width: calc(90vh - 300px);
+  height: calc(90vh - 300px);
   min-width: 10em;
   min-height: 10em;
   margin: 0 auto;
