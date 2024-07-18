@@ -17,7 +17,16 @@ COPY . /
 EXPOSE 8000
 
 # Define environment variable
-ENV NAME ob-sample-fast-api-docker
+ENV NAME=ob-sample-fast-api-docker
+
+# Use the secret to set the environment variables
+RUN --mount=type=secret,id=OPEN_AI_KEY \
+  --mount=type=secret,id=OPEN_AI_ORG \
+  --mount=type=secret,id=ELEVENLABS_KEY \
+   export OPEN_AI_KEY=$(cat /run/secrets/OPEN_AI_KEY) && \
+   export OPEN_AI_ORG=$(cat /run/secrets/OPEN_AI_ORG) && \
+   export ELEVENLABS_KEY=$(cat /run/secrets/ELEVENLABS_KEY) && \
+   yarn gen
 
 # Set the maintainer label
 LABEL maintainer="itskmyoo <contact@nicolasmura.fr>"
