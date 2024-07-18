@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="./static/favicon.ico" />
+    <title>ChatGPT Interview Bot</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link href="bot-SAVE.css" rel="stylesheet" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+      }
+      .container {
+        text-align: center;
+        display: flex;
+        flex-direction: row; /* Default flex direction */
+        align-items: center;
+        grid-gap: 50px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .recording {
+        color: red;
+      }
+      #audioPlayer {
+        margin-top: 20px;
+      }
+      .hidden {
+        display: none;
+      }
+      #resetButton {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+      }
+      @media (max-width: 700px) {
+        .container {
+          flex-direction: column; /* Change flex direction on small screens */
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <h2>ChatGPT Interview Bot</h2>
+        <div class="file-field input-field" style="display: none">
+          <div class="btn">
+            <span>File</span>
+            <input type="file" id="fileInput" />
+          </div>
+          <div class="file-path-wrapper">
+            <input class="file-path validate" type="text" />
+          </div>
+        </div>
+
+        <button
+          id="recordButton"
+          class="btn-floating btn-large waves-effect waves-light"
+        >
+          <i class="material-icons"> mic </i>
+        </button>
+        <p>
+          <i>
+            (Tip: press the space bar on your keyboard, say "Hello Sherlock!"
+            and then press the space bar again)
+          </i>
+        </p>
+      </div>
+      <div id="bot-container">
+        <div id="bot" class="neutral">
+          <div id="head">
+            <div id="left-ear">
+              <div id="left-ear-inner"></div>
+            </div>
+            <div id="face">
+              <div id="eyes">
+                <div id="left-eye"></div>
+                <div id="right-eye"></div>
+              </div>
+              <div id="mouth"></div>
+            </div>
+            <div id="right-ear">
+              <div id="right-ear-inner"></div>
+            </div>
+          </div>
+        </div>
+        <a
+          id="resetButton"
+          class="btn-floating waves-effect waves-light red tooltipped"
+          data-position="bottom"
+          data-tooltip="Delete chat history"
+        >
+          <i class="material-icons"> delete </i>
+        </a>
+      </div>
+      <audio id="audioPlayer" controls style="display: none"></audio>
+    </div>
+    <!-- Materialize JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+      let mediaRecorder;
+      let audioChunks;
+      const recordButton = document.getElementById('recordButton');
+      const fileInput = document.getElementById('fileInput');
+      const audioPlayer = document.getElementById('audioPlayer');
+
+      const bot = document.getElementById('bot');
+      const resetButton = document.getElementById('resetButton');
+
+      recordButton.addEventListener('click', async () => {
+        audioChunks = [];
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          recordButton.innerHTML = '<i class="material-icons">mic</i>';
+          recordButton.classList.remove('recording', 'red');
+          setStatus('computing');
+        } else {
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+            });
+          } catch (error) {
+            console.error('Error accessing microphone:', error);
+            M.toast({ html: error });
+            alert(
+              'Could not access the microphone. Please check your microphone settings and permissions.'
+            );
+          }
+
+          if (!stream) {
+            return;
+          }
+
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.start();
+          recordButton.innerHTML =
+            '<i class="material-icons recording">fiber_manual_record</i>';
+          recordButton.classList.add('recording', 'red');
+          setStatus('listening');
+
+          mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+
+            const file = new File([audioBlob], 'recording.mp3', {
+              type: 'audio/mp3',
+            });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+
+            // Disable the record button while waiting for the server response
+            recordButton.disabled = true;
+
+            // Automatically upload the file to the server
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/talk', {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!response.ok) {
+              M.toast({ html: 'Sorry, something went wrong.' });
+              recordButton.disabled = false; // Re-enable the record button
+              setStatus('');
+              return;
+            }
+
+            const mediaSource = new MediaSource();
+            audioPlayer.src = URL.createObjectURL(mediaSource);
+
+            mediaSource.addEventListener('sourceopen', () => {
+              const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
+              const reader = response.body.getReader();
+
+              function read() {
+                reader.read().then(({ done, value }) => {
+                  if (done) {
+                    sourceBuffer.addEventListener('updateend', () => {
+                      mediaSource.endOfStream();
+                      audioPlayer.play(); // Start playing the audio
+                      setStatus('speaking');
+                    });
+                    return;
+                  }
+                  sourceBuffer.appendBuffer(value);
+                  read();
+                });
+              }
+
+              read();
+            });
+
+            audioPlayer.addEventListener('ended', () => {
+              recordButton.disabled = false; // Re-enable the record button
+              setStatus('');
+            });
+          };
+        }
+      });
+
+      document.body.onkeyup = (event) => {
+        if (event.key == ' ' || event.code == 'Space' || event.keyCode == 32) {
+          recordButton.click();
+        }
+      };
+
+      resetButton.addEventListener('click', async () => {
+        resetChatHistory();
+      });
+
+      const setStatus = (newstatus) => {
+        bot.classList.remove('speaking', 'thinking', 'listening', 'computing');
+        if (newstatus) {
+          bot.classList.add(newstatus);
+        }
+      };
+
+      const resetChatHistory = async () => {
+        const response = await fetch('/reset');
+
+        if (!response.ok) {
+          M.toast({ html: 'Sorry, something went wrong.' });
+          return;
+        }
+
+        const data = await response.json();
+        M.toast({ html: data.message });
+      };
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const elems = document.querySelectorAll('.tooltipped');
+        const instances = M.Tooltip.init(elems);
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  </body>
+</html>
