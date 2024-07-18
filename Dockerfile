@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /
 
 # Make port 80 available to the world outside this container
-EXPOSE 3000
+EXPOSE 8000
 
 # Define environment variable
 ENV NAME ob-sample-fast-api-docker
@@ -23,5 +23,5 @@ ENV NAME ob-sample-fast-api-docker
 LABEL maintainer="itskmyoo <contact@nicolasmura.fr>"
 
 # Run main.py when the container launches
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 # uvicorn main:app --host 0.0.0.0 --port $PORT
