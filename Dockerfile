@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the current directory contents into the container at /app
 COPY . /
 
-# Make port 80 available to the world outside this container
+# Make port 8000 available to the world outside this container
 EXPOSE 8000
 
 # Define environment variable
@@ -25,8 +25,7 @@ RUN --mount=type=secret,id=OPEN_AI_KEY \
   --mount=type=secret,id=ELEVENLABS_KEY \
    export OPEN_AI_KEY=$(cat /run/secrets/OPEN_AI_KEY) && \
    export OPEN_AI_ORG=$(cat /run/secrets/OPEN_AI_ORG) && \
-   export ELEVENLABS_KEY=$(cat /run/secrets/ELEVENLABS_KEY) && \
-   yarn gen
+   export ELEVENLABS_KEY=$(cat /run/secrets/ELEVENLABS_KEY)
 
 # Set the maintainer label
 LABEL maintainer="itskmyoo <contact@nicolasmura.fr>"
