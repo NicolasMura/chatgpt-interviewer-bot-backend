@@ -18,6 +18,7 @@ jobs:
           envkey_OPEN_AI_ORG: ${{ secrets.OPEN_AI_ORG }}
           envkey_ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_KEY }}
           file_name: .env
+      - uses: actions/checkout@v3
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
