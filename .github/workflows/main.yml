@@ -10,16 +10,6 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Create env file
-        uses: SpicyPizza/create-envfile@v1
-        with:
-          envkey_DEBUG: false
-          envkey_OPEN_AI_KEY: ${{ secrets.OPEN_AI_KEY }}
-          envkey_OPEN_AI_ORG: ${{ secrets.OPEN_AI_ORG }}
-          envkey_ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_KEY }}
-          file_name: .env
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -32,15 +22,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: . # when using a path context, need a "Checkout" step (see above)
           platforms: linux/amd64,linux/arm64
-          file: Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/chatgpt-interviewer-bot:latest
-          build-args: |
-            OPEN_AI_KEY=${{ secrets.OPEN_AI_KEY }}
-            OPEN_AI_ORG=${{ secrets.OPEN_AI_ORG }}
-            ELEVENLABS_KEY=${{ secrets.ELEVENLABS_KEY }}
     env:
       DOCKER_CLI_EXPERIMENTAL: enabled
       DOCKER_BUILDKIT: 1
