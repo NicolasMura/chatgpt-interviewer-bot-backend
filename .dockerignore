@@ -3,6 +3,7 @@
 /.vscode
 /apps
 /node_modules
+.env
 .git
 
 # IDE - VSCode

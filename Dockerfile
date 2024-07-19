@@ -16,17 +16,6 @@ COPY . /
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# Define environment variable
-ENV NAME=ob-sample-fast-api-docker
-
-# Use the secret to set the environment variables
-RUN --mount=type=secret,id=OPEN_AI_KEY \
-  --mount=type=secret,id=OPEN_AI_ORG \
-  --mount=type=secret,id=ELEVENLABS_KEY \
-   export OPEN_AI_KEY=$(cat /run/secrets/OPEN_AI_KEY) && \
-   export OPEN_AI_ORG=$(cat /run/secrets/OPEN_AI_ORG) && \
-   export ELEVENLABS_KEY=$(cat /run/secrets/ELEVENLABS_KEY)
-
 # Set the maintainer label
 LABEL maintainer="Nicolas MURA <contact@nicolasmura.fr>"
 
