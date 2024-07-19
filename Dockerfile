@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /
@@ -28,7 +28,7 @@ RUN --mount=type=secret,id=OPEN_AI_KEY \
    export ELEVENLABS_KEY=$(cat /run/secrets/ELEVENLABS_KEY)
 
 # Set the maintainer label
-LABEL maintainer="itskmyoo <contact@nicolasmura.fr>"
+LABEL maintainer="Nicolas MURA <contact@nicolasmura.fr>"
 
 # Run main.py when the container launches
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

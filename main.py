@@ -17,6 +17,7 @@ load_dotenv()
 client = OpenAI(organization=os.getenv("OPEN_AI_ORG"),
                 api_key=os.getenv("OPEN_AI_KEY"))
 elevenlabs_key = os.getenv("ELEVENLABS_KEY")
+print('OPEN_AI_KEY: ', os.getenv("OPEN_AI_KEY"))
 
 app = FastAPI()
 app.mount("/static/browser",
