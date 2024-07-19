@@ -11,16 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create env file
-        run: |
-          touch .env
-          echo OPEN_AI_KEY=${OPEN_AI_KEY} >> .env
-          echo OPEN_AI_ORG=${OPEN_AI_ORG} >> .env
-          echo ELEVENLABS_KEY=${ELEVENLABS_KEY} >> .env
-          cat .env
-        env:
-          OPEN_AI_KEY: ${{ secrets.OPEN_AI_KEY }}
-          OPEN_AI_ORG: ${{ secrets.OPEN_AI_ORG }}
-          ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_KEY }}
+        uses: SpicyPizza/create-envfile@v1
+        with:
+          envkey_DEBUG: false
+          envkey_OPEN_AI_KEY: ${{ secrets.OPEN_AI_KEY }}
+          envkey_OPEN_AI_ORG: ${{ secrets.OPEN_AI_ORG }}
+          envkey_ELEVENLABS_KEY: ${{ secrets.ELEVENLABS_KEY }}
+          file_name: .env
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -33,7 +30,6 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: '{{defaultContext}}'
           push: true
           platforms: linux/amd64,linux/arm64
           tags: nicolasmura/chatgpt-interviewer-bot:latest
