@@ -34,7 +34,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/chatgpt-interviewer-bot:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/chatgpt-interviewer-bot:latest
           build-args: |
             OPEN_AI_KEY=${{ secrets.OPEN_AI_KEY }}
             OPEN_AI_ORG=${{ secrets.OPEN_AI_ORG }}
