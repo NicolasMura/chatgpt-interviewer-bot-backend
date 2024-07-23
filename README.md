@@ -97,3 +97,10 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 ## Credits
 
 [![AWS S3](https://yt3.googleusercontent.com/ytc/AIdro_l00TDaIm6OxCv6eJtOwdn2RHbFjeUJ8OJYVGmgdA4pEQ=s160-c-k-c0x00ffffff-no-rj)](https://www.youtube.com/@TravisMedia 'Travis Media')
+
+## To be investigated
+
+https://www.youtube.com/watch?v=taJlPG82Ucw (Coolify course)
+https://www.radiantmediaplayer.com/blog/at-last-safari-17.1-now-brings-the-new-managed-media-source-api-to-iphone.html
+https://developer.apple.com/videos/play/wwdc2023/10122/
+https://github.com/KenMwaura1/Fast-Api-Vue

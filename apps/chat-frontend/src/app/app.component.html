@@ -13,15 +13,15 @@
       </div>
     </div>
 
-    <!-- <button
-      id="recordButton"
-      class="btn-floating btn-large waves-effect waves-light"
-    >
-      <i class="material-icons"> mic </i>
-    </button> -->
     <button
+      (click)="toggleRecording()"
       type="button"
-      class="text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:focus:ring-blue-800 dark:hover:bg-blue-500 mr-10"
+      class="border hover:text-white focus:ring-4 focus:outline-none font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:hover:text-white mr-10"
+      [class]="
+        isRecording
+          ? 'text-red-700 border border-red-700 hover:bg-red-700 focus:ring-red-300 dark:border-red-500 dark:text-red-500 dark:focus:ring-red-800 dark:hover:bg-red-500'
+          : 'text-blue-700 border border-blue-700 hover:bg-blue-700 focus:ring-blue-300 dark:border-blue-500 dark:text-blue-500 dark:focus:ring-blue-800 dark:hover:bg-blue-500'
+      "
     >
       <svg
         class="w-8 h-8"
@@ -43,15 +43,7 @@
 
       <span class="sr-only">Microphone icon</span>
     </button>
-    <!-- <a
-      id="resetButton"
-      class="btn-floating waves-effect waves-light red tooltipped"
-      data-position="bottom"
-      data-tooltip="Delete chat history"
-    >
-      <i class="material-icons"> delete </i>
-    </a> -->
-    <button
+    <!-- <button
       type="button"
       class="text-red-700 border border-red-700 hover:bg-red-700 hover:text-white focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:focus:ring-red-800 dark:hover:bg-red-500"
     >
@@ -74,7 +66,7 @@
       </svg>
 
       <span class="sr-only">Delete history icon</span>
-    </button>
+    </button> -->
     <p class="my-4 text-sm">
       <i class="italic opacity-85">
         (Tip: press the space bar on your keyboard, say "Hello Sherlock!" and
@@ -101,5 +93,5 @@
       </div>
     </div>
   </div>
-  <audio id="audioPlayer" controls style="display: none"></audio>
+  <!-- <audio id="audioPlayer" controls style="display: none"></audio> -->
 </div>
