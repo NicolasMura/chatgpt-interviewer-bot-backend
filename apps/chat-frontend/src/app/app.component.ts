@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 
 @Component({
   standalone: true,
@@ -14,6 +14,9 @@ export class AppComponent {
   @ViewChild('audioPlayer') audioPlayer!: ElementRef<HTMLAudioElement>;
 
   async recordAudio(): Promise<void> {
+    // Important: unmute the audio element on user interaction to allow autoplay on mobile devices
+    this.audioPlayer.nativeElement.muted = false;
+
     if (this.recorder && this.recorder.state === 'recording') {
       console.log('stop recording');
       this.isRecording = false;
@@ -43,18 +46,43 @@ export class AppComponent {
 
           this.recorder.onstop = () => {
             console.log('recording stopped');
-            const blob = new Blob(chunks, { type: 'audio/mp3' });
+            const blob = new Blob(chunks, { type: 'audio/mpeg' });
             this.audioPlayer.nativeElement.src = URL.createObjectURL(blob);
             const tracks = stream.getTracks();
             tracks.forEach((track) => track.stop());
-            this.audioPlayer.nativeElement.play();
+
+            const promise = this.audioPlayer.nativeElement.play();
+            if (promise !== undefined) {
+              promise
+                .catch((error) => {
+                  // Auto-play was prevented
+                  // Show a UI element to let the user manually start playback
+                  console.error(error);
+                  console.error('Auto-play was prevented');
+                })
+                .then(() => {
+                  // Auto-play started
+                });
+            }
           };
 
           this.recorder.start();
         })
-        .catch((err) => {
-          console.error(`An error occurred: ${err}`);
+        .catch((error) => {
+          console.error(`An error occurred: ${error}`);
         });
+    }
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeyPress($event: KeyboardEvent): void {
+    if (
+      $event.key === ' ' ||
+      $event.code === 'Space' ||
+      $event.keyCode === 32
+    ) {
+      $event.preventDefault();
+      this.recordAudio();
     }
   }
 }
