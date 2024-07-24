@@ -86,7 +86,7 @@ yarn build
 
 ## Deploy on Render
 
-I've tested [Render](https://dashboard.render.com/web) to quickly deploy this app as a FastAPI app, and it does the job pretty well. See the `render.yaml` file to get some insight and the live app at https://chatgpt-interviewer-bot-backend.onrender.com.
+I've tested [Render](https://dashboard.render.com/web) to quickly deploy this app as a FastAPI app, and it does the job pretty well. See the `render.yaml` file to get some insight and the live app at https://chatgpt-interviewer-bot-latest.onrender.com.
 
 The only tricky point is that you have to remember adding a `PORT` environment variable (as well as `OPEN_AI_KEY`, `OPEN_AI_ORG` and `ELEVENLABS_KEY` ones) binded to 3000, and putting it in the start command in the Render's Web Service settings:
 

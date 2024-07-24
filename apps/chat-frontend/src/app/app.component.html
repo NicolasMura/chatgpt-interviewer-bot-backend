@@ -14,7 +14,7 @@
     </div>
 
     <button
-      (click)="toggleRecording()"
+      (click)="recordAudio()"
       type="button"
       class="border hover:text-white focus:ring-4 focus:outline-none font-medium rounded-full text-sm p-2.5 text-center inline-flex items-center dark:hover:text-white mr-10"
       [class]="
@@ -93,5 +93,5 @@
       </div>
     </div>
   </div>
-  <!-- <audio id="audioPlayer" controls style="display: none"></audio> -->
+  <audio #audioPlayer controls [autoplay]="true" style="display: none"></audio>
 </div>
