@@ -78,6 +78,12 @@ Adapt the target Angular build in `apps/chat-frontend/project.json`:
 yarn serve
 ```
 
+Tested on an iPhone (Chrome, Firefox, Safari):
+
+```shell
+yarn serve --host 0.0.0.0 --ssl true # Then open a tab in https://<your_IP>:4200 on your iPhone and accept the security risk
+```
+
 ## Build (for the frontend app)
 
 ```shell
@@ -86,6 +92,8 @@ yarn build
 
 ## Deploy on Render
 
+### Direct method with `render.yaml`
+
 I've tested [Render](https://dashboard.render.com/web) to quickly deploy this app as a FastAPI app, and it does the job pretty well. See the `render.yaml` file to get some insight and the live app at https://chatgpt-interviewer-bot-latest.onrender.com.
 
 The only tricky point is that you have to remember adding a `PORT` environment variable (as well as `OPEN_AI_KEY`, `OPEN_AI_ORG` and `ELEVENLABS_KEY` ones) binded to 3000, and putting it in the start command in the Render's Web Service settings:
@@ -93,6 +101,10 @@ The only tricky point is that you have to remember adding a `PORT` environment v
 ```shell
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
+
+### Docker method
+
+@TODO A documenter
 
 ## Credits
 

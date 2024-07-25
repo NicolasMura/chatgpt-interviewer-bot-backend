@@ -13,7 +13,7 @@ export class AppComponent {
 
   @ViewChild('audioPlayer') audioPlayer!: ElementRef<HTMLAudioElement>;
 
-  async recordAudio(): Promise<void> {
+  async toggleAudioRecord(): Promise<void> {
     // Important: unmute the audio element on user interaction to allow autoplay on mobile devices
     this.audioPlayer.nativeElement.muted = false;
 
@@ -29,49 +29,54 @@ export class AppComponent {
           audio: true,
           video: false,
         })
-        .then((stream) => {
-          this.recorder = new MediaRecorder(stream);
-
-          const chunks: Blob[] = [];
-          this.recorder.ondataavailable = (event) => {
-            if (event.data.size <= 0) {
-              return;
-            }
-            chunks.push(event.data);
-          };
-
-          this.recorder.onstart = () => {
-            console.log('recording started');
-          };
-
-          this.recorder.onstop = () => {
-            console.log('recording stopped');
-            const blob = new Blob(chunks, { type: 'audio/mpeg' });
-            this.audioPlayer.nativeElement.src = URL.createObjectURL(blob);
-            const tracks = stream.getTracks();
-            tracks.forEach((track) => track.stop());
-
-            const promise = this.audioPlayer.nativeElement.play();
-            if (promise !== undefined) {
-              promise
-                .catch((error) => {
-                  // Auto-play was prevented
-                  // Show a UI element to let the user manually start playback
-                  console.error(error);
-                  console.error('Auto-play was prevented');
-                })
-                .then(() => {
-                  // Auto-play started
-                });
-            }
-          };
-
-          this.recorder.start();
-        })
-        .catch((error) => {
-          console.error(`An error occurred: ${error}`);
-        });
+        .then((stream) => this.processAudioRecording(stream))
+        .catch((error) => this.handleError(error));
     }
+  }
+
+  processAudioRecording(stream: MediaStream): void {
+    this.recorder = new MediaRecorder(stream);
+
+    const chunks: Blob[] = [];
+    this.recorder.ondataavailable = (event) => {
+      if (event.data.size <= 0) {
+        return;
+      }
+      chunks.push(event.data);
+    };
+
+    this.recorder.onstart = () => {
+      console.log('recording started');
+    };
+
+    this.recorder.onstop = () => {
+      console.log('recording stopped');
+      const blob = new Blob(chunks, { type: 'audio/mpeg' });
+      this.audioPlayer.nativeElement.src = URL.createObjectURL(blob);
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => track.stop());
+
+      const promise = this.audioPlayer.nativeElement.play();
+      if (promise !== undefined) {
+        promise
+          .catch((error) => {
+            // Auto-play was prevented
+            // Show a UI element to let the user manually start playback
+            console.error(error);
+            console.error('Auto-play was prevented');
+          })
+          .then(() => {
+            // Auto-play started
+          });
+      }
+    };
+
+    this.recorder.start();
+  }
+
+  handleError(error: Error): void {
+    console.error(`An error occurred: ${error}`);
+    this.isRecording = false;
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -82,7 +87,7 @@ export class AppComponent {
       $event.keyCode === 32
     ) {
       $event.preventDefault();
-      this.recordAudio();
+      this.toggleAudioRecord();
     }
   }
 }
