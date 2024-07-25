@@ -25,7 +25,7 @@ app.mount("/static/browser",
 origins = [
     "http://localhost:4200",
     "https://localhost:4200",
-    "http://localhost:3000",
+    "https://chatgpt-interviewer-bot-latest.onrender.com",
 ]
 
 app.add_middleware(
