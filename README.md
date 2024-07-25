@@ -11,7 +11,7 @@ conda activate ChatGPT-Interview-Bot
 
 cp env-sample env # fill environment variables with your own
 
-uvicorn main:app --reload
+uvicorn main:app --port 3000 --reload
 ```
 
 Add `node_modules` to `.gitignore` file.
