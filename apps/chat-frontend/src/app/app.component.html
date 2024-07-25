@@ -64,7 +64,7 @@
     </p>
   </div>
   <div id="bot-container">
-    <div id="bot" class="neutral">
+    <div id="bot" class="neutral" [class]="botStatus">
       <div id="head">
         <div id="left-ear">
           <div id="left-ear-inner"></div>
@@ -89,4 +89,7 @@
     [muted]="true"
     style="display: none"
   ></audio>
+</div>
+<div>
+  <input #fileUpload type="file" style="display: none" />
 </div>
