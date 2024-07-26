@@ -78,11 +78,16 @@ Adapt the target Angular build in `apps/chat-frontend/project.json`:
 yarn serve
 ```
 
-Tested on an iPhone (Chrome, Firefox, Safari):
+Tested on an iPhone (Safari only - Not working on Chrome and Firefox because we can't access the microphone):
 
 ```shell
-yarn serve --host 0.0.0.0 --ssl true # Then open a tab in https://<your_IP>:4200 on your iPhone and accept the security risk
+yarn serve --host 0.0.0.0
 ```
+
+To make it work during development, connect your iPhone to your machine via a USB cable, on your iPhone open a tab at http://<your_IP>:4200 on Safari and accept the security risk.
+Finally, go to Safari on your machine, open Develop > your machine > your iPhone's browser to inspect, click on the "Device Settings" button and check the "allow media capture on insecure sites" and "Disable cross-origin restrictions" options:
+
+![alt text](Safari-allow-media-capture-on-insecure-sites.png)
 
 ## Build (for the frontend app)
 

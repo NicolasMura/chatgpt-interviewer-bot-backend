@@ -1,3 +1,4 @@
+import { AsyncPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import {
   Component,
@@ -11,7 +12,7 @@ import { BehaviorSubject, catchError, tap } from 'rxjs';
 
 @Component({
   standalone: true,
-  imports: [],
+  imports: [AsyncPipe],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -21,7 +22,8 @@ export class AppComponent {
 
   recorder!: MediaRecorder;
   isRecording = false;
-  botStatus = new BehaviorSubject('');
+  botStatusSubject = new BehaviorSubject('');
+  botStatus$ = this.botStatusSubject.asObservable();
 
   showAlert = false;
   alertMessage = '';
@@ -51,7 +53,11 @@ export class AppComponent {
       this.setStatus('listening');
       await navigator.mediaDevices
         .getUserMedia({
-          audio: true,
+          audio: {
+            autoGainControl: true,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
           video: false,
         })
         .then((stream) => this.processAudioRecording(stream))
@@ -76,27 +82,22 @@ export class AppComponent {
 
     this.recorder.onstop = () => {
       console.log('recording stopped');
-      const blob = new Blob(chunks, { type: 'audio/mpeg' });
-      const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop());
+      const audioBlob = new Blob(chunks, { type: 'audio/mp3' }); // Be careful : audio/mpeg not working for iPhone!
 
       // Build an audio file and send it to the server
-      const audioBlob = new Blob(chunks, { type: 'audio/mpeg' });
-      const file = new File([audioBlob], 'record.mpeg', {
-        type: 'audio/mpeg',
+      const file = new File([audioBlob], 'record.mp3', {
+        type: 'audio/mp3',
       });
       const formData = new FormData();
       formData.append('file', file);
 
-      const url = isDevMode() ? `http://localhost:3000/talk` : `/talk`;
+      const url = isDevMode() ? `http://192.168.1.151:3000/talk` : `/talk`;
       this.#http
         .post(url, formData, {
           responseType: 'blob',
-          reportProgress: true,
         })
         .pipe(
           tap((response) => {
-            this.setStatus('speaking');
             this.audioPlayer.nativeElement.src = URL.createObjectURL(response);
             const promise = this.audioPlayer.nativeElement.play();
 
@@ -110,15 +111,25 @@ export class AppComponent {
                   this.displayAlert(
                     error.message || 'Error: Auto-play was prevented'
                   );
+                  this.setStatus();
                 })
                 .then(() => {
                   // Auto-play started
+                  this.setStatus('speaking');
                 });
             }
+
+            this.audioPlayer.nativeElement.onended = () => {
+              console.log('Audio playback finished');
+              this.setStatus();
+            };
           }),
           catchError((error) => {
             console.error('Failed to send audio file to the server', error);
             this.setStatus();
+            this.displayAlert(
+              'Failed to send audio file to the server, please try again'
+            );
             return [];
           })
         )
@@ -130,14 +141,15 @@ export class AppComponent {
 
   setStatus(newStatus?: string): void {
     if (newStatus) {
-      this.botStatus.next(newStatus);
+      this.botStatusSubject.next(newStatus);
     } else {
-      this.botStatus.next('');
+      this.botStatusSubject.next('');
     }
   }
 
   handleError(error: Error): void {
     this.isRecording = false;
+    this.setStatus();
     if (error.name?.indexOf('NotAllowedError') !== -1) {
       this.displayAlert(
         'You must allow your browser to use your microphone to use this feature.'

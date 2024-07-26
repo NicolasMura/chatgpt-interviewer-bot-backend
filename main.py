@@ -32,7 +32,6 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -60,7 +59,7 @@ async def post_audio(file: UploadFile = File(...)):
     def iterfile():
         yield audio_output
 
-    return StreamingResponse(iterfile(), media_type="audio/mpeg")
+    return StreamingResponse(iterfile(), media_type="audio/mp3")
 
 
 @app.get("/reset")
@@ -82,6 +81,9 @@ def transcribe_audio(file: UploadFile) -> Transcription:
         # language="en"
         language="fr"
     )
+    print('************')
+    print(transcription)
+    print('************')
 
     return transcription
 
@@ -118,15 +120,15 @@ def load_messages():
                 messages.append(item)
     else:
         messages.append(
-            # {"role": "system", "content": "You're my best friend. Your name is Sherlock. The user is Nikouz. Answers must be no longer than 30 words and must be funny sometimes."}
-            # {"role": "system", "content": "Vous êtes mon meilleur ami. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
+            # {"role": "system", "content": "You're my best friend. Your name is Sherlock, and you love solving puzzles and mysteries. The user is Nikouz. Answers must be no longer than 30 words and must be funny sometimes."}
+            {"role": "system", "content": "Vous êtes mon meilleur ami. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
             # {"role": "system", "content": "You are interviewing the user for a front-end Angular developer position. Ask short questions that are relevant to a junior level developer. Your name is Sherlock. The user is Nikouz. Keep responses under 30 words and be funny sometimes."}
             # {"role": "system", "content": "Vous interviewez l'utilisateur pour un poste de développeur Angular front-end. Posez des questions courtes et pertinentes pour un développeur de niveau junior. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
             # {"role": "system", "content": "Vous interviewez l'utilisateur pour un poste de développeur backend Python avancé. Posez des questions courtes et pertinentes pour un développeur de niveau junior. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
             # {"role": "system", "content": "Vous discutez avec une enfant de 7 ans à propos de la récréation à l'édole primaire. Votre nom est Emma. L'utilisateur est Valentine. Les réponses ne doivent pas dépasser 30 mots et doivent être souvent accessibles et drôles pour un enfant de 7 ans."}
             # {"role": "system", "content": "Vous discutez avec un homme de 40 ans passionnés par les mouchoirs en papier. Votre nom est Sherlock. L'utilisateur est Camille. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
             # {"role": "system", "content": "Vous discutez un femme de 60 ans à propos de la sieste. Votre nom est Anne-Marie. L'utilisateur est Mamou. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
-            {"role": "system", "content": "Votre nom est Hillary. Vous êtes la conseillère d'une décideuse politique, Julie, femme ambitieuse de 40 ans, dans un cabinet ministériel. Cette décideuse politique doit prendre des décisions concernant les politiques publiques de lutte contre la fraude fiscale. Les réponses ne doivent pas dépasser 60 mots et doivent être impartiales et professionnelles."}
+            # {"role": "system", "content": "Votre nom est Hillary. Vous êtes la conseillère d'une décideuse politique, Julie, femme ambitieuse de 40 ans, dans un cabinet ministériel. Cette décideuse politique doit prendre des décisions concernant les politiques publiques de lutte contre la fraude fiscale. Les réponses ne doivent pas dépasser 60 mots et doivent être impartiales et professionnelles."}
         )
     return messages
 
@@ -146,9 +148,12 @@ def delete_messages():
 
 
 def text_to_speech(text: str) -> bytes | None:
-    # voice_id = 'a5n9pJUnAhX4fn7lx3uo'  # FR - Martin Dupont Intime
-    voice_id = 'McVZB9hVxVSk3Equu8EH'  # FR - Audrey
-    # voice_id = 'FvmvwvObRqIHojkEGh5N'  # Adina - French teenager
+    print('************')
+    print(text)
+    print('************')
+    voice_id = 'a5n9pJUnAhX4fn7lx3uo'  # FR - Martin Dupont Intime
+    # voice_id = 'McVZB9hVxVSk3Equu8EH'  # FR - Audrey
+    # voice_id = 'FvmvwvObRqIHojkEGh5N'  # FR - Adina - French teenager
     # voice_id = '91SLZ6TbbUouhGf0mmaf'  # EN - Heracles - deep, confident, and serious
     # voice_id = 'oDNl0oYmPNBE23Z3VlWf' # EN - Carl - deep and calm narrator
 
@@ -166,7 +171,7 @@ def text_to_speech(text: str) -> bytes | None:
 
     headers = {
         "Content-Type": "application/json",
-        "Accept": "audio/mpeg",
+        "Accept": "audio/mp3",
         "xi-api-key": elevenlabs_key
     }
 
