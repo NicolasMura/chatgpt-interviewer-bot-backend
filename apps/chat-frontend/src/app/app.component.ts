@@ -4,6 +4,7 @@ import {
   ElementRef,
   HostListener,
   inject,
+  isDevMode,
   ViewChild,
 } from '@angular/core';
 import { BehaviorSubject, catchError, tap } from 'rxjs';
@@ -22,9 +23,20 @@ export class AppComponent {
   isRecording = false;
   botStatus = new BehaviorSubject('');
 
+  showAlert = false;
+  alertMessage = '';
+
   @ViewChild('audioPlayer') audioPlayer!: ElementRef<HTMLAudioElement>;
 
   async toggleAudioRecord(): Promise<void> {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      this.displayAlert(
+        "Sorry but it seems that we can't use your microphone."
+      );
+      return;
+    }
+    this.hideAlert();
+
     // Important: unmute the audio element on user interaction to allow autoplay on mobile devices
     this.audioPlayer.nativeElement.muted = false;
 
@@ -65,7 +77,6 @@ export class AppComponent {
     this.recorder.onstop = () => {
       console.log('recording stopped');
       const blob = new Blob(chunks, { type: 'audio/mpeg' });
-      // this.audioPlayer.nativeElement.src = URL.createObjectURL(blob);
       const tracks = stream.getTracks();
       tracks.forEach((track) => track.stop());
 
@@ -77,8 +88,9 @@ export class AppComponent {
       const formData = new FormData();
       formData.append('file', file);
 
+      const url = isDevMode() ? `http://localhost:3000/talk` : `/talk`;
       this.#http
-        .post('http://localhost:3000/talk', formData, {
+        .post(url, formData, {
           responseType: 'blob',
           reportProgress: true,
         })
@@ -86,7 +98,23 @@ export class AppComponent {
           tap((response) => {
             this.setStatus('speaking');
             this.audioPlayer.nativeElement.src = URL.createObjectURL(response);
-            this.audioPlayer.nativeElement.play();
+            const promise = this.audioPlayer.nativeElement.play();
+
+            if (promise !== undefined) {
+              promise
+                .catch((error) => {
+                  // Auto-play was prevented
+                  // Show a UI element to let the user manually start playback
+                  console.error(error);
+                  console.error('Auto-play was prevented');
+                  this.displayAlert(
+                    error.message || 'Error: Auto-play was prevented'
+                  );
+                })
+                .then(() => {
+                  // Auto-play started
+                });
+            }
           }),
           catchError((error) => {
             console.error('Failed to send audio file to the server', error);
@@ -95,20 +123,6 @@ export class AppComponent {
           })
         )
         .subscribe();
-
-      // const promise = this.audioPlayer.nativeElement.play();
-      // if (promise !== undefined) {
-      //   promise
-      //     .catch((error) => {
-      //       // Auto-play was prevented
-      //       // Show a UI element to let the user manually start playback
-      //       console.error(error);
-      //       console.error('Auto-play was prevented');
-      //     })
-      //     .then(() => {
-      //       // Auto-play started
-      //     });
-      // }
     };
 
     this.recorder.start();
@@ -123,8 +137,14 @@ export class AppComponent {
   }
 
   handleError(error: Error): void {
-    console.error(`An error occurred: ${error}`);
     this.isRecording = false;
+    if (error.name?.indexOf('NotAllowedError') !== -1) {
+      this.displayAlert(
+        'You must allow your browser to use your microphone to use this feature.'
+      );
+      return;
+    }
+    this.displayAlert('An error occurred. Please try again.');
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -137,5 +157,14 @@ export class AppComponent {
       $event.preventDefault();
       this.toggleAudioRecord();
     }
+  }
+
+  displayAlert(message: string): void {
+    this.showAlert = true;
+    this.alertMessage = message;
+  }
+
+  hideAlert(): void {
+    this.showAlert = false;
   }
 }

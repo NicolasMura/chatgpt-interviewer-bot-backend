@@ -102,6 +102,8 @@ The only tricky point is that you have to remember adding a `PORT` environment v
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
+Don't forget to run `yarn build` and add frontend static files before pushing on the repo.
+
 ### Docker method
 
 @TODO A documenter
