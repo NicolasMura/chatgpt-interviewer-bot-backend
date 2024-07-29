@@ -11,6 +11,21 @@ from fastapi.staticfiles import StaticFiles
 from openai import OpenAI
 from openai.types.audio import Transcription
 from openai.types.chat import ChatCompletion
+from starlette.responses import Response
+
+
+class PrettyJSONResponse(Response):
+    media_type = "application/json"
+
+    def render(self, content) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=2,
+            separators=(", ", ": "),
+        ).encode("utf-8")
+
 
 load_dotenv()
 
@@ -42,6 +57,11 @@ async def root():
     return FileResponse("static/browser/index.html")
 
 
+@app.get("/database", response_class=PrettyJSONResponse)
+async def get_database():
+    return load_messages()
+
+
 @app.post("/talk")
 async def post_audio(file: UploadFile = File(...)):
     path = f"{file.filename}"
@@ -62,6 +82,18 @@ async def post_audio(file: UploadFile = File(...)):
     return StreamingResponse(iterfile(), media_type="audio/mp3")
 
 
+# for testing purposes
+@app.post("/talk-fake")
+async def post_audio_fake(file: UploadFile = File(...)):
+    path = f"{file.filename}"
+    with open(path, 'w+b') as f:
+        shutil.copyfileobj(file.file, f)
+
+    transcribe_audio(file)
+
+    return StreamingResponse(open('test.mp3', 'rb'), media_type="audio/mp3")
+
+
 @app.get("/reset")
 async def reset():
     delete_messages()
@@ -78,11 +110,13 @@ def transcribe_audio(file: UploadFile) -> Transcription:
     transcription = client.audio.transcriptions.create(
         model="whisper-1",
         file=audio_file,
-        # language="en"
-        language="fr"
+        response_format="verbose_json",
+        language="en",
+        # language="fr"
     )
     print('************')
-    print(transcription)
+    print(transcription.text)
+    print(transcription.model_dump_json())
     print('************')
 
     return transcription
@@ -121,8 +155,8 @@ def load_messages():
     else:
         messages.append(
             # {"role": "system", "content": "You're my best friend. Your name is Sherlock, and you love solving puzzles and mysteries. The user is Nikouz. Answers must be no longer than 30 words and must be funny sometimes."}
-            {"role": "system", "content": "Vous êtes mon meilleur ami. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
-            # {"role": "system", "content": "You are interviewing the user for a front-end Angular developer position. Ask short questions that are relevant to a junior level developer. Your name is Sherlock. The user is Nikouz. Keep responses under 30 words and be funny sometimes."}
+            # {"role": "system", "content": "Vous êtes mon meilleur ami. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
+            {"role": "system", "content": "You are interviewing the user for a front-end Angular developer position. Ask short questions that are relevant to a junior level developer. Your name is Sherlock. The user is Nikouz. Keep responses under 30 words and be funny sometimes."}
             # {"role": "system", "content": "Vous interviewez l'utilisateur pour un poste de développeur Angular front-end. Posez des questions courtes et pertinentes pour un développeur de niveau junior. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
             # {"role": "system", "content": "Vous interviewez l'utilisateur pour un poste de développeur backend Python avancé. Posez des questions courtes et pertinentes pour un développeur de niveau junior. Votre nom est Sherlock. L'utilisateur est Nikouz. Les réponses ne doivent pas dépasser 30 mots et doivent être parfois drôles."}
             # {"role": "system", "content": "Vous discutez avec une enfant de 7 ans à propos de la récréation à l'édole primaire. Votre nom est Emma. L'utilisateur est Valentine. Les réponses ne doivent pas dépasser 30 mots et doivent être souvent accessibles et drôles pour un enfant de 7 ans."}
@@ -151,10 +185,10 @@ def text_to_speech(text: str) -> bytes | None:
     print('************')
     print(text)
     print('************')
-    voice_id = 'a5n9pJUnAhX4fn7lx3uo'  # FR - Martin Dupont Intime
+    # voice_id = 'a5n9pJUnAhX4fn7lx3uo'  # FR - Martin Dupont Intime
     # voice_id = 'McVZB9hVxVSk3Equu8EH'  # FR - Audrey
     # voice_id = 'FvmvwvObRqIHojkEGh5N'  # FR - Adina - French teenager
-    # voice_id = '91SLZ6TbbUouhGf0mmaf'  # EN - Heracles - deep, confident, and serious
+    voice_id = '91SLZ6TbbUouhGf0mmaf'  # EN - Heracles - deep, confident, and serious
     # voice_id = 'oDNl0oYmPNBE23Z3VlWf' # EN - Carl - deep and calm narrator
 
     body = {

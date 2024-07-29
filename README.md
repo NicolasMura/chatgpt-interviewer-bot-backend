@@ -9,7 +9,7 @@ From the tutorial I found on YouTube at https://youtu.be/4y1a4syMJHM, big thanks
 conda create --name ChatGPT-Interview-Bot python fastapi uvicorn[standard] openai python-dotenv python-multipart requests
 conda activate ChatGPT-Interview-Bot
 
-cp env-sample env # fill environment variables with your own
+cp .env-sample .env # fill environment variables with your own
 
 uvicorn main:app --port 3000 --reload
 ```
@@ -78,10 +78,11 @@ Adapt the target Angular build in `apps/chat-frontend/project.json`:
 yarn serve
 ```
 
-Tested on an iPhone (Safari only - Not working on Chrome and Firefox because we can't access the microphone):
+Tested locally on an iPhone 8 (Safari only - Not working on Chrome and Firefox because we can't access the microphone):
 
 ```shell
 yarn serve --host 0.0.0.0
+uvicorn main:app --host <your_machine_IP> --port 3000 --reload
 ```
 
 To make it work during development, connect your iPhone to your machine via a USB cable, on your iPhone open a tab at http://<your_IP>:4200 on Safari and accept the security risk.
