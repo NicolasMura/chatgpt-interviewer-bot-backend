@@ -9,17 +9,28 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, catchError, tap } from 'rxjs';
+
+interface Message {
+  text: string;
+  audio: string;
+  lipsync: any;
+  facialExpression: string;
+  animation: string;
+}
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [AsyncPipe, FormsModule],
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })
 export class AppComponent implements OnInit {
   #http = inject(HttpClient);
+  #route = inject(ActivatedRoute);
 
   selectedAudioInputDevice?: MediaDeviceInfo;
   recorder!: MediaRecorder;
@@ -36,7 +47,15 @@ export class AppComponent implements OnInit {
 
   microphonePermission!: PermissionStatus;
 
+  isTextInputDisplayed = false;
+  isTextInputFocused = false;
+  textMessage = '';
+
   async ngOnInit(): Promise<void> {
+    this.#route.queryParamMap.subscribe((params) => {
+      this.isTextInputDisplayed = params.get('debug') === 'true';
+    });
+
     await navigator.mediaDevices
       ?.enumerateDevices()
       .then((devices) => {
@@ -102,13 +121,14 @@ export class AppComponent implements OnInit {
   }
 
   async toggleAudioRecord(): Promise<void> {
+    this.hideAlert();
+
     if (!navigator.mediaDevices?.getUserMedia) {
       this.displayAlert(
         "Sorry but it seems that we can't use your microphone."
       );
       return;
     }
-    this.hideAlert();
 
     if (!this.selectedAudioInputDevice) {
       this.displayAlert(
@@ -130,7 +150,7 @@ export class AppComponent implements OnInit {
     }
 
     // Important: unmute the audio element on user interaction to allow autoplay on mobile devices
-    this.audioPlayer.nativeElement.muted = false;
+    this.unmuteAudioPlayer();
 
     if (this.recorder && this.recorder.state === 'recording') {
       console.log('stop recording');
@@ -196,40 +216,14 @@ export class AppComponent implements OnInit {
     const formData = new FormData();
     formData.append('file', audioFile);
 
-    const url = isDevMode() ? 'http://192.168.1.151:3000/talk' : '/talk';
-    // const url = 'http://192.168.1.151:3000/talk-fake;' // Useful to bypass backend processing
+    const url = isDevMode() ? 'http://localhost:3000/talk' : '/talk';
+    // const url = 'http://192.168.1.151:3000/talk-fake;' // Useful to bypass some backend processing
     this.#http
       .post(url, formData, {
         responseType: 'blob',
       })
       .pipe(
-        tap((response) => {
-          this.audioPlayer.nativeElement.src = URL.createObjectURL(response);
-          const promise = this.audioPlayer.nativeElement.play();
-
-          if (promise !== undefined) {
-            promise
-              .catch((error) => {
-                // Auto-play was prevented
-                // Show a UI element to let the user manually start playback
-                console.error(error);
-                console.error('Auto-play was prevented');
-                this.displayAlert(
-                  error.message || 'Error: Auto-play was prevented'
-                );
-                this.setBotStatus();
-              })
-              .then(() => {
-                // Auto-play started
-                this.setBotStatus('speaking');
-              });
-          }
-
-          this.audioPlayer.nativeElement.onended = () => {
-            console.log('Audio playback finished');
-            this.setBotStatus();
-          };
-        }),
+        tap((response) => this.handleBlobResponse(response)),
         catchError((error) => {
           console.error('Failed to send audio file to the server', error);
           this.setBotStatus();
@@ -240,6 +234,79 @@ export class AppComponent implements OnInit {
         })
       )
       .subscribe();
+  }
+
+  sendTextToServer(text: string): void {
+    this.isBotComputingOrSpeaking = true;
+
+    // Important: unmute the audio element on user interaction to allow autoplay on mobile devices
+    this.unmuteAudioPlayer();
+
+    const url = isDevMode() ? 'http://localhost:3000/talk-text' : '/talk-text';
+    this.#http
+      .post(
+        url,
+        { text },
+        {
+          responseType: 'blob',
+        }
+      )
+      .pipe(
+        tap((response) => this.handleBlobResponse(response)),
+        catchError((error) => {
+          console.error('Failed to send text to the server', error);
+          this.setBotStatus();
+          this.displayAlert(
+            'Failed to send text to the server, please try again or <a href="." class="text-blue-600 dark:text-blue-500 hover:underline">reload the app</a>.'
+          );
+          return [];
+        })
+      )
+      .subscribe();
+  }
+
+  sendTextToServerV2(message: string): void {
+    console.log('sendTextToServerV2');
+    this.isBotComputingOrSpeaking = true;
+
+    // Important: unmute the audio element on user interaction to allow autoplay on mobile devices
+    this.unmuteAudioPlayer();
+
+    const url = isDevMode()
+      ? 'http://localhost:3000/talk-text-v2'
+      : '/talk-text-v2';
+    this.#http
+      .post<{ messages: Message[] }>(
+        url,
+        { message },
+        {
+          responseType: 'json',
+        }
+      )
+      .pipe(
+        tap((response) => this.handleJsonResponse(response.messages)),
+        catchError((error) => {
+          console.error('Failed to send text to the server', error);
+          this.setBotStatus();
+          this.displayAlert(
+            'Failed to send text to the server, please try again or <a href="." class="text-blue-600 dark:text-blue-500 hover:underline">reload the app</a>.'
+          );
+          return [];
+        })
+      )
+      .subscribe();
+  }
+
+  onTextInputKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const textInput = event.target as HTMLInputElement;
+      const message = textInput.value.trim();
+      if (message) {
+        this.sendTextToServerV2(message);
+        this.textMessage = '';
+      }
+    }
   }
 
   setBotStatus(newStatus?: string): void {
@@ -254,6 +321,47 @@ export class AppComponent implements OnInit {
       this.isBotComputingOrSpeaking = false;
       this.botStatusSubject.next('');
     }
+  }
+
+  handleBlobResponse(response: Blob): void {
+    if (response.type !== 'audio/mp3') {
+      this.displayAlert(
+        `An error occurred. Please try again (responseBlob.type: ${response.type})`
+      );
+      this.setBotStatus();
+      return;
+    }
+
+    this.audioPlayer.nativeElement.src = URL.createObjectURL(response);
+    const promise = this.audioPlayer.nativeElement.play();
+
+    if (promise !== undefined) {
+      promise
+        .catch((error) => {
+          // Auto-play was prevented
+          // Show a UI element to let the user manually start playback
+          console.error(error);
+          console.error('Auto-play was prevented');
+          this.displayAlert(error.message || 'Error: Auto-play was prevented');
+          this.setBotStatus();
+        })
+        .then(() => {
+          // Auto-play started
+          this.setBotStatus('speaking');
+        });
+    }
+
+    this.audioPlayer.nativeElement.onended = () => {
+      console.log('Audio playback finished');
+      this.setBotStatus();
+    };
+  }
+
+  handleJsonResponse(messages: Message[]): void {
+    console.log(messages);
+    this.audioPlayer.nativeElement.src = `data:audio/mp3;base64,${messages[0].audio}`;
+    this.audioPlayer.nativeElement.play();
+    this.setBotStatus();
   }
 
   handleError(error: Error, customMessage?: string): void {
@@ -282,13 +390,16 @@ export class AppComponent implements OnInit {
 
   @HostListener('window:keydown', ['$event'])
   onKeyPress($event: KeyboardEvent): void {
-    if (
-      $event.key === ' ' ||
-      $event.code === 'Space' ||
-      $event.keyCode === 32
-    ) {
-      $event.preventDefault();
-      this.toggleAudioRecord();
+    if (!this.isTextInputFocused) {
+      if (
+        $event.key === ' ' ||
+        $event.code === 'Space' ||
+        $event.keyCode === 32
+      ) {
+        $event.preventDefault();
+
+        this.toggleAudioRecord();
+      }
     }
   }
 
@@ -327,5 +438,9 @@ export class AppComponent implements OnInit {
 
   hasTouchScreen(): boolean {
     return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }
+
+  unmuteAudioPlayer(): void {
+    this.audioPlayer.nativeElement.muted = false;
   }
 }

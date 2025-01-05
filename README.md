@@ -6,12 +6,18 @@ From the tutorial I found on YouTube at https://youtu.be/4y1a4syMJHM, big thanks
 ## Quick start
 
 ```shell
-conda create --name ChatGPT-Interview-Bot python fastapi uvicorn[standard] openai python-dotenv python-multipart requests
+conda create --name ChatGPT-Interview-Bot python fastapi uvicorn[standard] openai python-dotenv python-multipart requests base64
 conda activate ChatGPT-Interview-Bot
 
 cp .env-sample .env # fill environment variables with your own
 
 uvicorn main:app --port 3000 --reload
+```
+
+A documenter - ajout de elevenlabs :
+
+```shell
+pip install elevenlabs
 ```
 
 Add `node_modules` to `.gitignore` file.
@@ -117,6 +123,17 @@ Don't forget to run `yarn build` and add frontend static files before pushing on
 ## Credits
 
 [![AWS S3](https://yt3.googleusercontent.com/ytc/AIdro_l00TDaIm6OxCv6eJtOwdn2RHbFjeUJ8OJYVGmgdA4pEQ=s160-c-k-c0x00ffffff-no-rj)](https://www.youtube.com/@TravisMedia 'Travis Media')
+
+## Next steps
+
+- Intégrer le build sur un hook pre-push Husky
+- N° de build ou n° de tag / commit + timestamp à intégrer au build via les GitHub actions
+- PWA
+- Dé-contextualiser la conversation
+- Rapatrier les features backend dans le frontend ? (si possible)
+- Robot 2D ou 3D avec expression faciale minimale et synchronisation labiale
+  - v1 "simple" en utilisant l’avatar de synthèse vocale de Microsoft Azure AI (Tuto dispo ici : https://raokarthik83.medium.com/building-a-text-to-speech-avatar-app-with-reactjs-and-azure-tts-avatar-ai-c9d2da0e9f75)
+  - v2 complète en récupérant un modèle sympa et en l'animant (cf. conversation ChatGPT)
 
 ## To be investigated
 

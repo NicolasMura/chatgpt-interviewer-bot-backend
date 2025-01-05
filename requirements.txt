@@ -1,3 +1,6 @@
+aiofiles
+base64
+elevenlabs
 fastapi
 uvicorn[standard]
 openai

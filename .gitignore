@@ -182,3 +182,4 @@ pyrightconfig.json
 .nx/workspace-data
 node_modules
 .angular
+bin
